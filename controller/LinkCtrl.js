@@ -42,7 +42,7 @@ exports.update = (req, res) => {
 
   LinkModel
     .updateOne({ _id: req.params.id }, { ...link, _id: req.params.id })
-    .then(() => res.status(200).json({ message: rocess.env.LINK_UPDATED }))
+    .then(() => res.status(200).json({ message: process.env.LINK_UPDATED }))
     .catch((error) => res.status(400).json({ error }));
 };
 
@@ -54,6 +54,6 @@ exports.update = (req, res) => {
 exports.delete = (req, res) => {
   LinkModel
     .deleteOne({ _id: req.params.id })
-    .then(() => res.status(200).json({ message: rocess.env.LINK_DELETED }))
+    .then(() => res.status(200).json({ message: process.env.LINK_DELETED }))
     .catch((error) => res.status(400).json({ error }))
 };
