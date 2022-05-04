@@ -6,28 +6,27 @@ const UserModel = require("../model/UserModel");
 require("dotenv").config();
 
 /**
- * CHECK EMAIL
+ * LIST USERS
  * @param {object} req 
  * @param {object} res 
- * @returns 
  */
-exports.checkEmail = (req, res) => {
-  const emailValidator = require("email-validator"); 
-
-  if (!emailValidator.validate(req.body.email)) {
-    return res.status(401).json(
-      { message: "Email invalide !" }
-    );
-  }
+ exports.list = (req, res) => {
+  UserModel
+    .find()
+    .then((users) => res.status(200).json(users))
+    .catch((error) => res.status(400).json({ error }));
 };
 
+// ******************** CHECKER ******************** //
+
 /**
- * CHECK PASSWORD
+ * CHECK USER
  * @param {object} req 
  * @param {object} res 
  * @returns 
  */
-exports.checkPass = (req, res) => {
+exports.checkUser = (req, res) => {
+  const emailValidator = require("email-validator"); 
   const passValidator = require("password-validator");
   const schema = new passValidator();
 
@@ -39,97 +38,53 @@ exports.checkPass = (req, res) => {
     .has().digits(process.env.PASS_INT)
     .has().not().spaces();
 
+  if (!emailValidator.validate(req.body.email)) {
+
+    return res.status(401).json({ message: process.env.CHECK_USER_EMAIL });
+  }
+
   if (!schema.validate(req.body.pass)) {
-    return res.status(401).json(
-      { message: "Mot de passe invalide !" }
-    );
+
+    return res.status(401).json({ message: process.env.CHECK_USER_PASS });
   }
 }
 
 /**
- * CHECK USER
- * @param {object} user 
+ * CHECK LOGIN
+ * @param {*} login 
  * @param {object} res 
  * @returns 
  */
-exports.checkUser = (user, res) => {
-  if (!user) {
-    return res.status(401).json(
-      { error: "Utilisateur non trouvé !" }
-    );
+exports.checkLogin = (login, res) => {
+  if (typeof login === "object" && !login) {
+
+    return res.status(401).json({ error: process.env.CHECK_LOGIN_EMAIL });
+  }
+  else if (typeof login === "boolean" && !login) {
+
+    return res.status(401).json({ error: process.env.CHECK_LOGIN_PASS });
   }
 };
 
-/**
- * CHECK VALID
- * @param {boolean} valid 
- * @param {object} res 
- * @returns 
- */
-exports.checkValid = (valid, res) => {
-  if (!valid) {
-    return res.status(401).json(
-      { error: "Mot de passe incorrect !" }
-    );
-  }
-};
-
-/**
- * LIST USERS
- * @param {object} req 
- * @param {object} res 
- */
-exports.list = (req, res) => {
-  UserModel
-    .find()
-    .then(users => res.status(200).json(users))
-    .catch(error => res.status(400).json({ error }));
-};
-
-/**
- * CREATE USER
- * @param {object} req 
- * @param {object} res 
- */
-exports.create = (req, res) => {
-  this.checkEmail(req, res);
-  this.checkPass(req, res);
-
-  bcrypt
-    .hash(req.body.pass, 10)
-    .then(hash => {
-      const user = new UserModel({
-        name: req.body.name,
-        email: req.body.email,
-        pass: hash
-      });
-
-      user.save()
-        .then(() => res.status(201).json(
-          { message: "Utilisateur créé !" }
-        ))
-        .catch(error => res.status(400).json({ error }));
-    })
-    .catch(error => res.status(500).json({ error }));
-};
+// ******************** LOGIN ******************** //
 
 /**
  * LOGIN USER
  * @param {object} req 
  * @param {object} res 
  */
-exports.login = (req, res) => {
+ exports.login = (req, res) => {
   const jwt = require("jsonwebtoken");
 
   UserModel
     .findOne({ email: req.body.email })
-    .then(user => {
-      this.checkUser(user, res);
+    .then((user) => {
+      this.checkLogin(user, res);
 
       bcrypt
         .compare(req.body.pass, user.pass)
-        .then(valid => {
-          this.checkValid(valid, res);
+        .then((valid) => {
+          this.checkLogin(valid, res);
 
           res.status(200).json({
             userId: user._id,
@@ -140,9 +95,35 @@ exports.login = (req, res) => {
             )
           });
         })
-        .catch(error => res.status(500).json({ error }));
+        .catch((error) => res.status(500).json({ error }));
     })
-    .catch(error => res.status(500).json({ error }));
+    .catch((error) => res.status(500).json({ error }));
+};
+
+// ******************** CRUD ******************** //
+
+/**
+ * CREATE USER
+ * @param {object} req 
+ * @param {object} res 
+ */
+exports.create = (req, res) => {
+  this.checkUser(req, res);
+
+  bcrypt
+    .hash(req.body.pass, 10)
+    .then((hash) => {
+      const user = new UserModel({
+        name: req.body.name,
+        email: req.body.email,
+        pass: hash
+      });
+
+      user.save()
+        .then(() => res.status(201).json({ message: process.env.USER_CREATED }))
+        .catch((error) => res.status(400).json({ error }));
+    })
+    .catch((error) => res.status(500).json({ error }));
 };
 
 /**
@@ -151,12 +132,11 @@ exports.login = (req, res) => {
  * @param {object} res 
  */
 exports.update = (req, res) => {
-  this.checkEmail(req, res);
-  this.checkPass(req, res);
+  this.checkUser(req, res);
 
   bcrypt
     .hash(req.body.pass, 10)
-    .then(hash => {
+    .then((hash) => {
       let user = {
         name: req.body.name,
         email: req.body.email,
@@ -164,15 +144,10 @@ exports.update = (req, res) => {
       };
 
       UserModel
-        .updateOne(
-          { _id: req.params.id },
-          { ...user, _id: req.params.id }
-        )
-        .then(() => res.status(200).json(
-          { message: "Utilisateur modifié !" }
-        ))
+        .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
+        .then(() => res.status(200).json({ message: process.env.USER_UPDATED }))
     })
-    .catch(error => res.status(400).json({ error }));
+    .catch((error) => res.status(400).json({ error }));
 };
 
 /**
@@ -183,32 +158,44 @@ exports.update = (req, res) => {
 exports.delete = (req, res) => {
   UserModel
     .deleteOne({ _id: req.params.id })
-    .then(() => res.status(200).json(
-      { message: "Utilisateur supprimé !" }
-    ))
-    .catch(error => res.status(400).json({ error }));
+    .then(() => res.status(200).json({ message: process.env.USER_DELETED }))
+    .catch((error) => res.status(400).json({ error }));
 };
 
+// ******************** MAILER ******************** //
+
 /**
- * SEND
+ * GET MESSAGE TRANSPORTER
+ * @param {object} req 
+ * @param {object} res 
+ * @returns 
+ */
+exports.getTransporter = (req, res) => {
+  const nodemailer = require("nodemailer");
+
+  const transport = {
+    host: process.env.MAIL_HOST,
+    port: process.env.MAIL_PORT,
+    secure: process.env.MAIL_SECURE,
+    auth: {
+      user: process.env.MAIL_USER,
+      pass: process.env.MAIL_PASS
+    }
+  };
+
+  const transporter = nodemailer.createTransport(transport);
+
+  return transporter;
+}
+
+/**
+ * SEND MESSAGE
  * @param {object} req 
  * @param {object} res 
  */
 exports.send = (req, res) => {
-  const nodemailer = require("nodemailer");
-
-  let transport = {
-    "host": process.env.MAIL_HOST,
-    "port": process.env.MAIL_PORT,
-    "secure": process.env.MAIL_SECURE,
-    "auth": {
-      "user": process.env.MAIL_USER,
-      "pass": process.env.MAIL_PASS
-    }
-  };
-
-  let transporter = nodemailer.createTransport(transport);
-  let host        = req.get("host");
+  const transporter = this.getTransporter(req, res);
+  const host = req.get("host");
 
   (async function(){
     try {
@@ -221,13 +208,9 @@ exports.send = (req, res) => {
       };
 
       await transporter.sendMail(message, function() {
-        res.status(200).json(
-          { message: "Message sent !" }
-        );
+        res.status(200).json({ message: process.env.USER_MESSAGE });
       });
 
-    } catch(e){
-      console.error(e);
-    }
+    } catch(e){ console.error(e); }
   })();
 };

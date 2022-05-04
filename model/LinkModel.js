@@ -6,11 +6,13 @@ const LinkModel = mongoose.Schema(
   {
     name: { 
       type: String, 
-      required: true 
+      required: true,
+      unique: true
     },
     url: { 
       type: String, 
-      required: true
+      required: true,
+      unique: true
     },
     cat: { 
       type: String, 
