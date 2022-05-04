@@ -10,7 +10,7 @@ require("dotenv").config();
  * @param {object} req 
  * @param {object} res 
  */
- exports.list = (req, res) => {
+exports.list = (req, res) => {
   UserModel
     .find()
     .then((users) => res.status(200).json(users))
@@ -73,7 +73,7 @@ exports.checkLogin = (login, res) => {
  * @param {object} req 
  * @param {object} res 
  */
- exports.login = (req, res) => {
+exports.login = (req, res) => {
   const jwt = require("jsonwebtoken");
 
   UserModel
