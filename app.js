@@ -15,7 +15,7 @@ require("dotenv").config();
 mongoose
   .connect(process.env.DB, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log(process.env.MONGO_SUCCESS))
-  .catch(() => console.log(process.env.MONGO_FAILED));
+  .catch(() => console.log(process.env.MONGO_FAIL));
 
 /**
  * EXPRESS
