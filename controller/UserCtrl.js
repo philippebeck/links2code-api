@@ -1,6 +1,7 @@
 "use strict";
 
-const bcrypt    = require("bcrypt");
+const bcrypt = require("bcrypt");
+const nem = require("nemjs");
 const UserModel = require("../model/UserModel");
 
 require("dotenv").config();
@@ -17,86 +18,15 @@ exports.list = (req, res) => {
     .catch((error) => res.status(400).json({ error }));
 };
 
-// ******************** CHECKER ******************** //
-
-/**
- * CHECK USER
- * @param {object} req 
- * @param {object} res 
- * @returns 
- */
-exports.checkUser = (req, res) => {
-  const emailValidator = require("email-validator"); 
-  const passValidator = require("password-validator");
-  const schema = new passValidator();
-
-  schema
-    .is().min(process.env.PASS_MIN)
-    .is().max(process.env.PASS_MAX)
-    .has().uppercase()
-    .has().lowercase()
-    .has().digits(process.env.PASS_INT)
-    .has().not().spaces();
-
-  if (!emailValidator.validate(req.body.email)) {
-
-    return res.status(401).json({ message: process.env.CHECK_USER_EMAIL });
-  }
-
-  if (!schema.validate(req.body.pass)) {
-
-    return res.status(401).json({ message: process.env.CHECK_USER_PASS });
-  }
-}
-
-/**
- * CHECK LOGIN
- * @param {*} login 
- * @param {object} res 
- * @returns 
- */
-exports.checkLogin = (login, res) => {
-  if (typeof login === "object" && !login) {
-
-    return res.status(401).json({ error: process.env.CHECK_LOGIN_EMAIL });
-  }
-  else if (typeof login === "boolean" && !login) {
-
-    return res.status(401).json({ error: process.env.CHECK_LOGIN_PASS });
-  }
-};
-
-// ******************** LOGIN ******************** //
-
 /**
  * LOGIN USER
  * @param {object} req 
  * @param {object} res 
  */
 exports.login = (req, res) => {
-  const jwt = require("jsonwebtoken");
-
   UserModel
     .findOne({ email: req.body.email })
-    .then((user) => {
-      this.checkLogin(user, res);
-
-      bcrypt
-        .compare(req.body.pass, user.pass)
-        .then((valid) => {
-          this.checkLogin(valid, res);
-
-          res.status(200).json({
-            userId: user._id,
-            token: jwt.sign(
-              { userId: user._id },
-              process.env.JWT,
-              { expiresIn: process.env.JWT_DURATION }
-            )
-          });
-        })
-        .catch((error) => res.status(500).json({ error }));
-    })
+    .then((user) => { nem.login(req, res, user) })
     .catch((error) => res.status(500).json({ error }));
 };
 
@@ -108,7 +38,7 @@ exports.login = (req, res) => {
  * @param {object} res 
  */
 exports.create = (req, res) => {
-  this.checkUser(req, res);
+  nem.user(req, res);
 
   bcrypt
     .hash(req.body.pass, 10)
@@ -124,7 +54,7 @@ exports.create = (req, res) => {
         .catch((error) => res.status(400).json({ error }));
     })
     .catch((error) => res.status(500).json({ error }));
-};
+}
 
 /**
  * UPDATE USER
@@ -132,7 +62,7 @@ exports.create = (req, res) => {
  * @param {object} res 
  */
 exports.update = (req, res) => {
-  this.checkUser(req, res);
+  nem.user(req, res);
 
   bcrypt
     .hash(req.body.pass, 10)
@@ -165,36 +95,12 @@ exports.delete = (req, res) => {
 // ******************** MAILER ******************** //
 
 /**
- * GET MESSAGE TRANSPORTER
- * @param {object} req 
- * @param {object} res 
- * @returns 
- */
-exports.getTransporter = (req, res) => {
-  const nodemailer = require("nodemailer");
-
-  const transport = {
-    host: process.env.MAIL_HOST,
-    port: process.env.MAIL_PORT,
-    secure: process.env.MAIL_SECURE,
-    auth: {
-      user: process.env.MAIL_USER,
-      pass: process.env.MAIL_PASS
-    }
-  };
-
-  const transporter = nodemailer.createTransport(transport);
-
-  return transporter;
-}
-
-/**
  * SEND MESSAGE
  * @param {object} req 
  * @param {object} res 
  */
 exports.send = (req, res) => {
-  const transporter = this.getTransporter(req, res);
+  const mailer = nem.mailer();
   const host = req.get("host");
 
   (async function(){
@@ -207,7 +113,7 @@ exports.send = (req, res) => {
         text: req.body.message
       };
 
-      await transporter.sendMail(message, function() {
+      await mailer.sendMail(message, function() {
         res.status(200).json({ message: process.env.USER_MESSAGE });
       });
 
