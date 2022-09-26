@@ -1,7 +1,7 @@
 "use strict";
 
-const bcrypt = require("bcrypt");
-const nem = require("nemjs");
+const bcrypt    = require("bcrypt");
+const nem       = require("nemjs");
 const UserModel = require("../model/UserModel");
 
 require("dotenv").config();
