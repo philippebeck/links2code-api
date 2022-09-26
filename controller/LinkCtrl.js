@@ -6,8 +6,8 @@ require("dotenv").config();
 
 /**
  * LIST LINK
- * @param {*} req 
- * @param {*} res 
+ * @param {object} req 
+ * @param {object} res 
  */
 exports.list = (req, res) => {
   LinkModel
@@ -20,8 +20,8 @@ exports.list = (req, res) => {
 
 /**
  * CREATE LINK
- * @param {*} req 
- * @param {*} res 
+ * @param {object} req 
+ * @param {object} res 
  */
 exports.create = (req, res) => {
   let link = new LinkModel(req.body);
@@ -34,8 +34,8 @@ exports.create = (req, res) => {
 
 /**
  * UPDATE LINK
- * @param {*} req 
- * @param {*} res 
+ * @param {object} req 
+ * @param {object} res 
  */
 exports.update = (req, res) => {
   let link = req.body;
@@ -48,8 +48,8 @@ exports.update = (req, res) => {
 
 /**
  * DELETE LINK
- * @param {*} req 
- * @param {*} res 
+ * @param {object} req 
+ * @param {object} res 
  */
 exports.delete = (req, res) => {
   LinkModel
