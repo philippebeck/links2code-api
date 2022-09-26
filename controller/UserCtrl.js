@@ -30,7 +30,7 @@ exports.login = (req, res) => {
     .catch((error) => res.status(500).json({ error }));
 };
 
-// ******************** CRUD ******************** //
+//! ****************************** CRUD ******************************
 
 /**
  * CREATE USER
@@ -92,10 +92,10 @@ exports.delete = (req, res) => {
     .catch((error) => res.status(400).json({ error }));
 };
 
-// ******************** MAILER ******************** //
+//! ****************************** MAILER ******************************
 
 /**
- * SEND MESSAGE
+ * SEND USER MESSAGE
  * @param {object} req 
  * @param {object} res 
  */
