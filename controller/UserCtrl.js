@@ -26,7 +26,7 @@ exports.list = (req, res) => {
 exports.login = (req, res) => {
   UserModel
     .findOne({ email: req.body.email })
-    .then((user) => { nem.login(req, res, user) })
+    .then((user) => { nem.checkLogin(req, res, user) })
     .catch((error) => res.status(500).json({ error }));
 };
 
@@ -38,7 +38,7 @@ exports.login = (req, res) => {
  * @param {object} res 
  */
 exports.create = (req, res) => {
-  nem.user(req, res);
+  nem.checkUser(req, res);
 
   bcrypt
     .hash(req.body.pass, 10)
@@ -62,7 +62,7 @@ exports.create = (req, res) => {
  * @param {object} res 
  */
 exports.update = (req, res) => {
-  nem.user(req, res);
+  nem.checkUser(req, res);
 
   bcrypt
     .hash(req.body.pass, 10)
@@ -100,7 +100,7 @@ exports.delete = (req, res) => {
  * @param {object} res 
  */
 exports.send = (req, res) => {
-  const mailer = nem.mailer();
+  const mailer = nem.createMailer();
   const host = req.get("host");
 
   (async function(){
