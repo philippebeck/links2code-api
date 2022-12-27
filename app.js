@@ -4,6 +4,7 @@ const express   = require("express");
 const mongoose  = require("mongoose");
 const helmet    = require("helmet");
 const sanitize  = require("express-mongo-sanitize");
+const rateLimit = require("express-rate-limit");
 const linkRoute = require("./route/LinkRoute");
 const userRoute = require("./route/UserRoute");
 
@@ -45,9 +46,19 @@ app.use((req, res, next) => {
 });
 
 /**
+ * RATE LIMIT
+ */
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+/**
  * ROUTES
  */
 app.use(process.env.ROUTE_LINK, linkRoute);
-app.use(process.env.ROUTE_USER, userRoute);
+app.use(process.env.ROUTE_USER, userRoute, limiter);
 
 module.exports = app;
