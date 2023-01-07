@@ -1,6 +1,7 @@
 "use strict";
 
 const bcrypt    = require("bcrypt");
+const fs        = require("fs");
 const nem       = require("nemjs");
 const UserModel = require("../model/UserModel");
 
