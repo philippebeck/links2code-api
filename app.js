@@ -2,8 +2,11 @@
 
 const express   = require("express");
 const mongoose  = require("mongoose");
+const cors      = require("cors");
 const helmet    = require("helmet");
+const path      = require("path");
 const sanitize  = require("express-mongo-sanitize");
+const rateLimit = require("express-rate-limit");
 const linkRoute = require("./route/LinkRoute");
 const userRoute = require("./route/UserRoute");
 
@@ -22,6 +25,7 @@ mongoose
  */
 const app = express();
 app.use(express.json());
+app.use(cors());
 app.use(helmet());
 app.use(sanitize());
 
@@ -45,9 +49,24 @@ app.use((req, res, next) => {
 });
 
 /**
+ * RATE LIMIT
+ */
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+/**
+ * IMAGES
+ */
+app.use(`/${process.env.IMG}`, express.static(path.join(__dirname, process.env.IMG)));
+
+/**
  * ROUTES
  */
 app.use(process.env.ROUTE_LINK, linkRoute);
-app.use(process.env.ROUTE_USER, userRoute);
+app.use(process.env.ROUTE_USER, userRoute, limiter);
 
 module.exports = app;

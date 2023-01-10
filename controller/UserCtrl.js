@@ -1,8 +1,10 @@
 "use strict";
 
-const bcrypt    = require("bcrypt");
-const nem       = require("nemjs");
-const UserModel = require("../model/UserModel");
+const bcrypt      = require("bcrypt");
+const formidable  = require('formidable');
+const fs          = require("fs");
+const nem         = require("nemjs");
+const UserModel   = require("../model/UserModel");
 
 require("dotenv").config();
 
@@ -16,7 +18,7 @@ exports.list = (req, res) => {
     .find()
     .then((users) => res.status(200).json(users))
     .catch((error) => res.status(400).json({ error }));
-};
+}
 
 /**
  * LOGIN USER
@@ -26,9 +28,9 @@ exports.list = (req, res) => {
 exports.login = (req, res) => {
   UserModel
     .findOne({ email: req.body.email })
-    .then((user) => { nem.login(req, res, user) })
+    .then((user) => { nem.checkLogin(req, res, user) })
     .catch((error) => res.status(500).json({ error }));
-};
+}
 
 //! ****************************** CRUD ******************************
 
@@ -36,24 +38,39 @@ exports.login = (req, res) => {
  * CREATE USER
  * @param {object} req 
  * @param {object} res 
+ * @param {function} next 
  */
-exports.create = (req, res) => {
-  nem.user(req, res);
+exports.create = (req, res, next) => {
+  //nem.checkUser(req, res);
 
-  bcrypt
-    .hash(req.body.pass, 10)
-    .then((hash) => {
-      const user = new UserModel({
-        name: req.body.name,
-        email: req.body.email,
-        pass: hash
-      });
+  const form = formidable({ 
+    uploadDir: "img",
+    keepExtensions: true
+  });
 
-      user.save()
-        .then(() => res.status(201).json({ message: process.env.USER_CREATED }))
-        .catch((error) => res.status(400).json({ error }));
-    })
-    .catch((error) => res.status(500).json({ error }));
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      next(err);
+      return;
+    }
+    
+    bcrypt
+      .hash(fields.pass, 10)
+      .then((hash) => {
+        let user = new UserModel({
+          name: fields.name,
+          email: fields.email,
+          image: files.image.newFilename,
+          pass: hash
+        });
+
+        user
+          .save()
+          .then(() => res.status(201).json({ message: process.env.USER_CREATED }))
+          .catch((error) => res.status(400).json({ error }));
+      })
+      .catch((error) => res.status(500).json({ error }));
+  });
 }
 
 /**
@@ -62,23 +79,36 @@ exports.create = (req, res) => {
  * @param {object} res 
  */
 exports.update = (req, res) => {
-  nem.user(req, res);
+  //nem.checkUser(req, res);
 
-  bcrypt
-    .hash(req.body.pass, 10)
-    .then((hash) => {
-      let user = {
-        name: req.body.name,
-        email: req.body.email,
-        pass: hash
-      };
+  const form = formidable({ 
+    uploadDir: "img",
+    keepExtensions: true
+  });
 
-      UserModel
-        .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
-        .then(() => res.status(200).json({ message: process.env.USER_UPDATED }))
-    })
-    .catch((error) => res.status(400).json({ error }));
-};
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      next(err);
+      return;
+    }
+
+    bcrypt
+      .hash(fields.pass, 10)
+      .then((hash) => {
+        let user = {
+          name: fields.name,
+            email: fields.email,
+            image: files.image.newFilename,
+            pass: hash
+        };
+
+        UserModel
+          .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
+          .then(() => res.status(200).json({ message: process.env.USER_UPDATED }))
+      })
+      .catch((error) => res.status(400).json({ error }));
+  });
+}
 
 /**
  * DELETE USER
@@ -87,10 +117,19 @@ exports.update = (req, res) => {
  */
 exports.delete = (req, res) => {
   UserModel
-    .deleteOne({ _id: req.params.id })
-    .then(() => res.status(200).json({ message: process.env.USER_DELETED }))
-    .catch((error) => res.status(400).json({ error }));
-};
+    .findOne({ _id: req.params.id })
+    .then(user => {
+      const filename = user.image.split(`/${process.env.IMG}/`)[1];
+
+      fs.unlink(`${process.env.IMG}/${filename}`, () => {
+        UserModel
+          .deleteOne({ _id: req.params.id })
+          .then(() => res.status(200).json({ message: process.env.USER_DELETED }))
+          .catch((error) => res.status(400).json({ error }));
+      });
+    })
+    .catch(error => res.status(500).json({ error }));
+}
 
 //! ****************************** MAILER ******************************
 
@@ -100,7 +139,7 @@ exports.delete = (req, res) => {
  * @param {object} res 
  */
 exports.send = (req, res) => {
-  const mailer = nem.mailer();
+  const mailer = nem.createMailer();
   const host = req.get("host");
 
   (async function(){
@@ -119,4 +158,4 @@ exports.send = (req, res) => {
 
     } catch(e){ console.error(e); }
   })();
-};
+}
