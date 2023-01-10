@@ -3,6 +3,7 @@
 const express   = require("express");
 const mongoose  = require("mongoose");
 const helmet    = require("helmet");
+const path      = require("path");
 const sanitize  = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
 const linkRoute = require("./route/LinkRoute");
@@ -54,6 +55,11 @@ const limiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false
 });
+
+/**
+ * IMAGES
+ */
+app.use(`/${process.env.IMG}`, express.static(path.join(__dirname, process.env.IMG)));
 
 /**
  * ROUTES
