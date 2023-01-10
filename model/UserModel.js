@@ -10,12 +10,12 @@ const UserModel = mongoose.Schema(
       required: true,
       unique: true
     },
-    image: { 
+    email: { 
       type: String, 
       required: true,
       unique: true
     },
-    email: { 
+    image: { 
       type: String, 
       required: true,
       unique: true
