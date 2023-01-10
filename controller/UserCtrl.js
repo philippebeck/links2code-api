@@ -18,7 +18,7 @@ exports.list = (req, res) => {
     .find()
     .then((users) => res.status(200).json(users))
     .catch((error) => res.status(400).json({ error }));
-};
+}
 
 /**
  * LOGIN USER
@@ -30,7 +30,7 @@ exports.login = (req, res) => {
     .findOne({ email: req.body.email })
     .then((user) => { nem.checkLogin(req, res, user) })
     .catch((error) => res.status(500).json({ error }));
-};
+}
 
 //! ****************************** CRUD ******************************
 
@@ -108,7 +108,7 @@ exports.delete = (req, res) => {
       });
     })
     .catch(error => res.status(500).json({ error }));
-};
+}
 
 //! ****************************** MAILER ******************************
 
@@ -137,4 +137,4 @@ exports.send = (req, res) => {
 
     } catch(e){ console.error(e); }
   })();
-};
+}
