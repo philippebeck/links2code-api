@@ -79,26 +79,36 @@ exports.create = (req, res, next) => {
  * @param {object} res 
  */
 exports.update = (req, res) => {
-  nem.checkUser(req, res);
+  //nem.checkUser(req, res);
 
-  bcrypt
-    .hash(req.body.pass, 10)
-    .then((hash) => {
-      let image = `${req.protocol}://${req.get("host")}/${process.env.IMG}/${req.file.filename}`;
+  const form = formidable({ 
+    uploadDir: "img",
+    keepExtensions: true
+  });
 
-      let user = {
-        name: req.body.name,
-        email: req.body.email,
-        image: image,
-        pass: hash
-      };
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      next(err);
+      return;
+    }
 
-      UserModel
-        .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
-        .then(() => res.status(200).json({ message: process.env.USER_UPDATED }))
-    })
-    .catch((error) => res.status(400).json({ error }));
-};
+    bcrypt
+      .hash(fields.pass, 10)
+      .then((hash) => {
+        let user = {
+          name: fields.name,
+            email: fields.email,
+            image: files.image.newFilename,
+            pass: hash
+        };
+
+        UserModel
+          .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
+          .then(() => res.status(200).json({ message: process.env.USER_UPDATED }))
+      })
+      .catch((error) => res.status(400).json({ error }));
+  });
+}
 
 /**
  * DELETE USER
