@@ -38,28 +38,39 @@ exports.login = (req, res) => {
  * CREATE USER
  * @param {object} req 
  * @param {object} res 
+ * @param {function} next 
  */
-exports.create = (req, res) => {
-  nem.checkUser(req, res);
+exports.create = (req, res, next) => {
+  //nem.checkUser(req, res);
 
-  bcrypt
-    .hash(req.body.pass, 10)
-    .then((hash) => {
-      let image = `${req.protocol}://${req.get("host")}/${process.env.IMG}/${req.file.filename}`;
+  const form = formidable({ 
+    uploadDir: "img",
+    keepExtensions: true
+  });
 
-      let user = new UserModel({
-        name: req.body.name,
-        email: req.body.email,
-        image: image,
-        pass: hash
-      });
+  form.parse(req, (err, fields, files) => {
+    if (err) {
+      next(err);
+      return;
+    }
+    
+    bcrypt
+      .hash(fields.pass, 10)
+      .then((hash) => {
+        let user = new UserModel({
+          name: fields.name,
+          email: fields.email,
+          image: files.image.newFilename,
+          pass: hash
+        });
 
-      user
-        .save()
-        .then(() => res.status(201).json({ message: process.env.USER_CREATED }))
-        .catch((error) => res.status(400).json({ error }));
-    })
-    .catch((error) => res.status(500).json({ error }));
+        user
+          .save()
+          .then(() => res.status(201).json({ message: process.env.USER_CREATED }))
+          .catch((error) => res.status(400).json({ error }));
+      })
+      .catch((error) => res.status(500).json({ error }));
+  });
 }
 
 /**
