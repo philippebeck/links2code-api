@@ -2,11 +2,11 @@
 
 const express   = require("express");
 const mongoose  = require("mongoose");
-const cors      = require("cors");
 const helmet    = require("helmet");
 const path      = require("path");
 const sanitize  = require("express-mongo-sanitize");
 const rateLimit = require("express-rate-limit");
+const cors      = require("cors");
 const linkRoute = require("./route/LinkRoute");
 const userRoute = require("./route/UserRoute");
 
@@ -30,25 +30,6 @@ app.use(helmet());
 app.use(sanitize());
 
 /**
- * CORS
- */
-app.use((req, res, next) => {
-  res.setHeader(
-    "Access-Control-Allow-Origin", 
-    "*"
-    );
-  res.setHeader(
-    "Access-Control-Allow-Headers", 
-    "Origin, X-Requested-With, Content, Accept, Content-Type, Authorization"
-    );
-  res.setHeader(
-    "Access-Control-Allow-Methods", 
-    "GET, POST, PUT, DELETE, PATCH, OPTIONS"
-    );
-  next();
-});
-
-/**
  * RATE LIMIT
  */
 const limiter = rateLimit({
@@ -59,14 +40,14 @@ const limiter = rateLimit({
 });
 
 /**
- * IMAGES
- */
-app.use(`/${process.env.IMG}`, express.static(path.join(__dirname, process.env.IMG)));
-
-/**
  * ROUTES
  */
 app.use(process.env.ROUTE_LINK, linkRoute);
 app.use(process.env.ROUTE_USER, userRoute, limiter);
+
+/**
+ * IMAGES
+ */
+app.use(`/${process.env.IMG}`, express.static(path.join(__dirname, process.env.IMG)));
 
 module.exports = app;
