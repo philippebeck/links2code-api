@@ -92,15 +92,28 @@ exports.update = (req, res) => {
       return;
     }
 
+    let image = fields.image;
+
+    console.log("fields => ", image);
+
+    console.log(files);
+
+    if (Object.keys(files).length !== 0) {
+      image = files.image.newFilename;
+      console.log("files => ", image);
+    }
+
     bcrypt
       .hash(fields.pass, 10)
       .then((hash) => {
         let user = {
           name: fields.name,
-            email: fields.email,
-            image: files.image.newFilename,
-            pass: hash
+          email: fields.email,
+          image: image,
+          pass: hash
         };
+
+        console.log(user);
 
         UserModel
           .updateOne({ _id: req.params.id }, { ...user, _id: req.params.id })
